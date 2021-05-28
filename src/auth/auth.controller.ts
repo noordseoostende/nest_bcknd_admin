@@ -1,12 +1,28 @@
-import {BadRequestException, Body, Controller, NotFoundException, Post} from '@nestjs/common';
+import {
+    BadRequestException,
+    Body, ClassSerializerInterceptor,
+    Controller,
+    Get,
+    NotFoundException,
+    Post,
+    Req,
+    Res,
+    UseInterceptors
+} from '@nestjs/common';
 import {UserService} from "../user/user.service";
 import * as bcrypt from 'bcryptjs';
 import {RegisterDto} from "./models/register.dto";
+import {JwtService} from "@nestjs/jwt";
+import {Request, Response} from 'express';
 
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller()
 export class AuthController {
 
-    constructor(private userService: UserService) {
+    constructor(
+        private userService: UserService,
+        private jwtService: JwtService
+        ) {
     }
 
     @Post('register')
@@ -27,7 +43,8 @@ export class AuthController {
     @Post('login')
     async login(
         @Body('email') email: string,
-        @Body('password') password: string
+        @Body('password') password: string,
+        @Res() response: Response
     ) {
         const user = await this.userService.findOne({email});
 
@@ -38,6 +55,21 @@ export class AuthController {
         if (!await bcrypt.compare(password, user.password)) {
             throw new BadRequestException('Ongeldige gegevens');
         }
+
+        const jwt = await this.jwtService.signAsync({id: user.id});
+
+        response.cookie('jwt', jwt, {httpOnly: true});
         return user;
     }
+
+
+    @Get('user')
+    async user(@Req() request: Request) {
+        const cookie = request.cookies['jwt'];
+
+        const data = await  this.jwtService.verifyAsync(cookie);
+
+        return this.userService.findOne({id: data['id']});
+    }
+
 }
