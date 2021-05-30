@@ -26,37 +26,46 @@ export class UserController {
 
     @Get()
     async all(@Query('page') page = 1): Promise<User[]> {
-    return this.userService.paginate(page);
-  }
+        return this.userService.paginate(page);
+    }
 
-  @Post()
+
+    @Post()
     async create(@Body() body: UserCreateDto): Promise<User> {
-      const password = await bcrypt.hash('1234', 12);
-        return this.userService.create({
-            first_name: body.first_name,
-            last_name: body.last_name,
-            email: body.email,
-            password
-        });
-  }
+        const password = await bcrypt.hash('1234', 12);
 
-  @Get(':id')
+        const {role_id, ...data} = body;
+
+        return this.userService.create({
+            ...data,
+            password,
+            role: {id: role_id}
+        });
+    }
+
+    @Get(':id')
     async get(@Param('id') id: number) {
         return this.userService.findOne({id});
-  }
+    }
 
-  @Put(':id')
+    @Put(':id')
     async update(
         @Param('id') id: number,
         @Body() body: UserUpdateDto
-  ) {
-      await this.userService.update(id, body)
+    ) {
+        const {role_id, ...data} = body;
 
-      return this.userService.findOne({id});
-  }
+        await this.userService.update(id,
+            {
+                ...data,
+                role: {id: role_id}
+            });
 
-  @Delete(':id')
+        return this.userService.findOne({id});
+    }
+
+    @Delete(':id')
     async delete(@Param('id') id: number) {
-      return this.userService.delete(id);
-  }
+        return this.userService.delete(id);
+    }
 }

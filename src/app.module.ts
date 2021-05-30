@@ -5,6 +5,8 @@ import { AppService } from './app.service';
   import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
+import { RoleModule } from './role/role.module';
+import { PermissionModule } from './permission/permission.module';
 
 @Module({
   imports: [UserModule, 
@@ -17,7 +19,7 @@ import { CommonModule } from './common/common.module';
       database: 'admin',
       autoLoadEntities: true,
       synchronize: true,
-    }), AuthModule, CommonModule,
+    }), AuthModule, CommonModule, RoleModule, PermissionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
